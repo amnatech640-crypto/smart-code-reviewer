@@ -5,15 +5,12 @@ import axios from "axios";
 import { jsPDF } from "jspdf";
 import "./CodeReviewer.css";
 
-// Standardized production environment URL check that Vite compiles flawlessly
+// Updated for production compatibility with serverless environments
 const getBaseUrl = () => {
-  if (typeof import.meta !== "undefined" && import.meta.env && import.meta.env.VITE_BACKEND_URL) {
-    return import.meta.env.VITE_BACKEND_URL;
+  if (typeof window !== "undefined" && window.location.hostname !== "localhost") {
+    return ""; // In production, use relative paths to talk straight to Netlify Functions
   }
-  if (typeof process !== "undefined" && process.env && process.env.REACT_APP_BACKEND_URL) {
-    return process.env.REACT_APP_BACKEND_URL;
-  }
-  return "http://localhost:5000";
+  return "http://localhost:5000"; // Fallback to your local server port when developing locally
 };
 
 const API_BASE_URL = getBaseUrl();
@@ -28,7 +25,9 @@ const CodeReviewer = () => {
 
   const fetchHistory = async () => {
     try {
-      const res = await axios.get(`${API_BASE_URL}/api/history`);
+      // Formats URL to properly access production functions endpoint or local api
+      const targetUrl = API_BASE_URL === "" ? "/.netlify/functions/api/history" : `${API_BASE_URL}/api/history`;
+      const res = await axios.get(targetUrl);
       setHistory(res.data);
     } catch (err) {
       console.error("Could not fetch database records:", err);
@@ -43,7 +42,9 @@ const CodeReviewer = () => {
     setLoading(true);
     setReview("");
     try {
-      const response = await axios.post(`${API_BASE_URL}/api/review`, { code, mode });
+      // Formats URL to properly access production functions endpoint or local api
+      const targetUrl = API_BASE_URL === "" ? "/.netlify/functions/api/review" : `${API_BASE_URL}/api/review`;
+      const response = await axios.post(targetUrl, { code, mode });
       setReview(response.data.review);
       fetchHistory(); 
     } catch (error) {
