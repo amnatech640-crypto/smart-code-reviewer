@@ -5,12 +5,12 @@ import axios from "axios";
 import { jsPDF } from "jspdf";
 import "./CodeReviewer.css";
 
-// Updated for production compatibility with serverless environments
+// Formats your endpoint safely across your local setup and production deployments
 const getBaseUrl = () => {
   if (typeof window !== "undefined" && window.location.hostname !== "localhost") {
-    return ""; // In production, use relative paths to talk straight to Netlify Functions
+    return ""; // Empty string tells the browser to utilize relative paths on Netlify
   }
-  return "http://localhost:5000"; // Fallback to your local server port when developing locally
+  return "http://localhost:5000"; 
 };
 
 const API_BASE_URL = getBaseUrl();
@@ -25,7 +25,6 @@ const CodeReviewer = () => {
 
   const fetchHistory = async () => {
     try {
-      // Formats URL to properly access production functions endpoint or local api
       const targetUrl = API_BASE_URL === "" ? "/.netlify/functions/api/history" : `${API_BASE_URL}/api/history`;
       const res = await axios.get(targetUrl);
       setHistory(res.data);
@@ -42,7 +41,6 @@ const CodeReviewer = () => {
     setLoading(true);
     setReview("");
     try {
-      // Formats URL to properly access production functions endpoint or local api
       const targetUrl = API_BASE_URL === "" ? "/.netlify/functions/api/review" : `${API_BASE_URL}/api/review`;
       const response = await axios.post(targetUrl, { code, mode });
       setReview(response.data.review);
