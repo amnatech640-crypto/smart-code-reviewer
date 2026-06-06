@@ -4,7 +4,12 @@
   publish = "dist"
 
 [functions]
-  directory = "../netlify/functions"
+  directory = "netlify/functions"
+
+[[redirects]]
+  from = "/api/*"
+  status = 200
+  to = "/.netlify/functions/api/:splat"
 
 [[redirects]]
   from = "/.netlify/functions/*"
