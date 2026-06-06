@@ -2,3 +2,11 @@
   base = "client"
   command = "npm run build"
   publish = "dist"
+
+[functions]
+  directory = "../netlify/functions"
+
+[[redirects]]
+  from = "/.netlify/functions/*"
+  status = 200
+  to = "/.netlify/functions/:splat"
