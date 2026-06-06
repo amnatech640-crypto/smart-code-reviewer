@@ -10,15 +10,13 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Optimized serverless connection pool management to prevent 502 gateway timeouts
+// Main serverless connection routine with forced timeouts to prevent 502 loop hangs
 const connectDB = async () => {
-  if (mongoose.connection.readyState >= 1) {
-    return;
-  }
+  if (mongoose.connection.readyState >= 1) return;
   try {
-    // Setting bufferCommands to false prevents the function from freezing mid-execution
     await mongoose.connect(process.env.MONGO_URI, {
       bufferCommands: false,
+      serverSelectionTimeoutMS: 5000 // Fails fast instead of hanging if MongoDB is unreachable
     });
     console.log("Database connected smoothly via serverless pipeline ✅");
   } catch (err) {
@@ -27,6 +25,7 @@ const connectDB = async () => {
   }
 };
 
+// Re-creates your structural Review Schema safely inside the serverless layer
 const ReviewSchema = new mongoose.Schema({
   code: { type: String, required: true },
   review: { type: String, required: true },
@@ -36,9 +35,10 @@ const ReviewSchema = new mongoose.Schema({
 
 const Review = mongoose.models.Review || mongoose.model("Review", ReviewSchema);
 
-// Initializing groq key inside runtime wrapper to avoid instantiation crashes
+// Initializing groq client safely on runtime declaration
 const getGroqClient = () => new Groq({ apiKey: process.env.GROQ_API_KEY });
 
+// POST route handler
 app.post("/.netlify/functions/api/review", async (req, res) => {
   try {
     await connectDB();
@@ -69,12 +69,14 @@ app.post("/.netlify/functions/api/review", async (req, res) => {
   }
 });
 
+// GET history route handler
 app.get("/.netlify/functions/api/history", async (req, res) => {
   try {
     await connectDB();
     const databaseHistory = await Review.find().sort({ createdAt: -1 }).limit(15);
     res.json(databaseHistory);
   } catch (error) {
+    console.error("History fetch error:", error);
     res.status(500).json({ error: error.message });
   }
 });
